@@ -3,10 +3,20 @@
 	<head>
 		<title>ASE Assignment XML Documentation</title>
 		<style>
-			pre {
+			body {
 				font-family: monospace;
-				white-space: pre;
 				padding: 20px;
+				background-color: #f5f5f5;
+				line-height: 1.4;
+			}
+			code {
+				color: #333;
+				display: block;
+				margin: 10px 0;
+				padding: 10px;
+				background: #fff;
+				border: 1px solid #ddd;
+				border-radius: 4px;
 			}
 		</style>
 	</head>
@@ -16,13 +26,22 @@
 			fetch("ASE_Assignment_Roshan_Vyas.xml")
 				.then((response) => response.text())
 				.then((text) => {
-					// Decode the XML entities
-					const decoded = text
-						.replace(/&lt;/g, "<")
-						.replace(/&gt;/g, ">")
-						.replace(/&quot;/g, '"')
-						.replace(/&amp;/g, "&");
-					document.getElementById("content").textContent = decoded;
+					// Format XML with proper indentation
+					const formatted = text
+						.replace(/></g, ">\n<") // Add newlines between tags
+						.replace(/\n\s+\n/g, "\n") // Remove extra blank lines
+						.split("\n") // Split into lines
+						.map((line) => line.trim()) // Remove extra spaces
+						.filter((line) => line) // Remove empty lines
+						.map((line, _, arr) => {
+							let indent = 0;
+							if (line.startsWith("</")) indent = -1; // Closing tag
+							const spaces = "    ".repeat(Math.max(0, indent));
+							return spaces + line;
+						})
+						.join("\n"); // Join back together
+
+					document.getElementById("content").textContent = formatted;
 				});
 		</script>
 	</body>
