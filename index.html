@@ -16,7 +16,13 @@
 			fetch("ASE_Assignment_Roshan_Vyas.xml")
 				.then((response) => response.text())
 				.then((text) => {
-					document.getElementById("content").textContent = text;
+					// Decode the XML entities
+					const decoded = text
+						.replace(/&lt;/g, "<")
+						.replace(/&gt;/g, ">")
+						.replace(/&quot;/g, '"')
+						.replace(/&amp;/g, "&");
+					document.getElementById("content").textContent = decoded;
 				});
 		</script>
 	</body>
