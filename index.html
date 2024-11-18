@@ -1,48 +1,131 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>ASE Assignment XML Documentation</title>
+		<title>ASE Assignment Documentation</title>
 		<style>
 			body {
-				font-family: monospace;
+				font-family: Arial, sans-serif;
+				max-width: 1000px;
+				margin: 0 auto;
 				padding: 20px;
-				background-color: #f5f5f5;
-				line-height: 1.4;
+				line-height: 1.6;
+			}
+			.class-doc {
+				background: #f8f9fa;
+				padding: 20px;
+				margin: 20px 0;
+				border-radius: 5px;
+				border-left: 4px solid #007bff;
+			}
+			.method-doc {
+				margin: 15px 0;
+				padding: 10px;
+				border-bottom: 1px solid #dee2e6;
+			}
+			.params {
+				margin-left: 20px;
+				color: #666;
+			}
+			.param-name {
+				color: #d63384;
+				font-family: monospace;
+			}
+			.return-value {
+				color: #198754;
+			}
+			.exception {
+				color: #dc3545;
 			}
 			code {
-				color: #333;
-				display: block;
-				margin: 10px 0;
-				padding: 10px;
-				background: #fff;
-				border: 1px solid #ddd;
-				border-radius: 4px;
+				background: #f1f3f5;
+				padding: 2px 4px;
+				border-radius: 3px;
+				font-family: monospace;
 			}
 		</style>
 	</head>
 	<body>
-		<pre id="content"></pre>
-		<script>
-			fetch("ASE_Assignment_Roshan_Vyas.xml")
-				.then((response) => response.text())
-				.then((text) => {
-					// Format XML with proper indentation
-					const formatted = text
-						.replace(/></g, ">\n<") // Add newlines between tags
-						.replace(/\n\s+\n/g, "\n") // Remove extra blank lines
-						.split("\n") // Split into lines
-						.map((line) => line.trim()) // Remove extra spaces
-						.filter((line) => line) // Remove empty lines
-						.map((line, _, arr) => {
-							let indent = 0;
-							if (line.startsWith("</")) indent = -1; // Closing tag
-							const spaces = "    ".repeat(Math.max(0, indent));
-							return spaces + line;
-						})
-						.join("\n"); // Join back together
+		<div id="content"></div>
 
-					document.getElementById("content").textContent = formatted;
-				});
+		<script>
+			async function loadAndTransformXML() {
+				const response = await fetch("ASE_Assignment_Roshan_Vyas.xml");
+				const text = await response.text();
+				const parser = new DOMParser();
+				const xmlDoc = parser.parseFromString(text, "text/xml");
+				const content = document.getElementById("content");
+
+				// Process each member
+				const members = xmlDoc.getElementsByTagName("member");
+				let currentClass = "";
+				let classDiv = null;
+
+				for (let member of members) {
+					const name = member.getAttribute("name");
+					const summary = member
+						.getElementsByTagName("summary")[0]
+						?.textContent.trim();
+
+					if (name.startsWith("T:")) {
+						// Class documentation
+						currentClass = name.substring(2);
+						classDiv = document.createElement("div");
+						classDiv.className = "class-doc";
+						classDiv.innerHTML = `
+                        <h2>${currentClass.split(".").pop()}</h2>
+                        <p>${summary}</p>
+                    `;
+						content.appendChild(classDiv);
+					} else if (name.startsWith("M:") || name.startsWith("P:")) {
+						// Method or Property documentation
+						const methodDiv = document.createElement("div");
+						methodDiv.className = "method-doc";
+
+						let methodName = name
+							.split(".")
+							.pop()
+							.replace("#ctor", "Constructor");
+						const params = Array.from(
+							member.getElementsByTagName("param")
+						)
+							.map(
+								(p) =>
+									`<div class="params"><span class="param-name">${p.getAttribute(
+										"name"
+									)}</span>: ${p.textContent.trim()}</div>`
+							)
+							.join("");
+
+						const returns = member
+							.getElementsByTagName("returns")[0]
+							?.textContent.trim();
+						const exceptions = Array.from(
+							member.getElementsByTagName("exception")
+						)
+							.map(
+								(e) =>
+									`<div class="exception">Throws: ${e.textContent.trim()}</div>`
+							)
+							.join("");
+
+						methodDiv.innerHTML = `
+                        <h3>${methodName}</h3>
+                        <p>${summary}</p>
+                        ${params}
+                        ${
+							returns
+								? `<div class="return-value">Returns: ${returns}</div>`
+								: ""
+						}
+                        ${exceptions}
+                    `;
+
+						classDiv?.appendChild(methodDiv);
+					}
+				}
+			}
+
+			loadAndTransformXML();
 		</script>
 	</body>
 </html>
